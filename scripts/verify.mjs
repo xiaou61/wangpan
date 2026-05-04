@@ -50,6 +50,7 @@ async function removeVerificationRequests(page) {
 
 await page.goto(baseUrl, { waitUntil: "networkidle" });
 await page.screenshot({ path: "output/playwright/public-desktop.png", fullPage: true });
+if ((await page.locator('a[href="/yuanfang"]').count()) > 0) throw new Error("Public page should not expose the admin link");
 await page.fill("#keywordInput", "办公");
 await page.waitForTimeout(350);
 const visibleCards = await page.locator(".resource-card").count();
