@@ -1,0 +1,103 @@
+{
+  "categories": [
+    {
+      "id": "cat-efficiency",
+      "name": "效率工具",
+      "description": "软件、模板、自动化工具和实用合集",
+      "color": "#1677ff",
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    {
+      "id": "cat-exam",
+      "name": "考试资料",
+      "description": "备考资料、题库、课程笔记和资料包",
+      "color": "#42a5ff",
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    {
+      "id": "cat-design",
+      "name": "设计素材",
+      "description": "图片、字体、样机、灵感板和 UI 素材",
+      "color": "#0b4dd8",
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    {
+      "id": "cat-dev",
+      "name": "编程开发",
+      "description": "源码、文档、开发工具和学习路线",
+      "color": "#22c7e8",
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    }
+  ],
+  "resources": [
+    {
+      "id": "res-work-kit",
+      "title": "办公效率资料包",
+      "description": "表格模板、文档模板、批量处理小工具和常用清单，后台可替换为真实链接。",
+      "categoryId": "cat-efficiency",
+      "tags": ["模板", "办公", "工具"],
+      "active": true,
+      "pinned": true,
+      "createdAt": "2026-05-03T00:00:00.000Z",
+      "updatedAt": "2026-05-03T00:00:00.000Z",
+      "links": [
+        {
+          "id": "lnk-work-quark",
+          "provider": "quark",
+          "label": "夸克网盘",
+          "url": "https://pan.quark.cn/",
+          "code": ""
+        },
+        {
+          "id": "lnk-work-baidu",
+          "provider": "baidu",
+          "label": "百度网盘",
+          "url": "https://pan.baidu.com/",
+          "code": ""
+        }
+      ]
+    },
+    {
+      "id": "res-exam-notes",
+      "title": "通用考试笔记合集",
+      "description": "按科目整理的笔记、错题复盘表和复习计划样例。",
+      "categoryId": "cat-exam",
+      "tags": ["笔记", "复习", "题库"],
+      "active": true,
+      "pinned": false,
+      "createdAt": "2026-05-03T00:00:00.000Z",
+      "updatedAt": "2026-05-03T00:00:00.000Z",
+      "links": [
+        {
+          "id": "lnk-exam-baidu",
+          "provider": "baidu",
+          "label": "百度网盘",
+          "url": "https://pan.baidu.com/",
+          "code": ""
+        }
+      ]
+    },
+    {
+      "id": "res-ui-assets",
+      "title": "界面设计素材库",
+      "description": "常用组件参考、样机资源、图标集合和展示模板。",
+      "categoryId": "cat-design",
+      "tags": ["UI", "样机", "图标"],
+      "active": true,
+      "pinned": false,
+      "createdAt": "2026-05-03T00:00:00.000Z",
+      "updatedAt": "2026-05-03T00:00:00.000Z",
+      "links": [
+        {
+          "id": "lnk-design-quark",
+          "provider": "quark",
+          "label": "夸克网盘",
+          "url": "https://pan.quark.cn/",
+          "code": ""
+        }
+      ]
+    }
+  ],
+  "visits": [],
+  "opens": []
+}

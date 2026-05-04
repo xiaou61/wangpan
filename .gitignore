@@ -1,0 +1,8 @@
+node_modules/
+.env
+data/db.json
+output/
+task_plan.md
+findings.md
+progress.md
+*.log

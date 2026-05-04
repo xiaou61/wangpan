@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>资料渡口后台</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script defer src="/admin.js"></script>
+  </head>
+  <body class="admin-page">
+    <main class="admin-layout">
+      <section class="login-screen" id="loginScreen">
+        <form class="login-card" id="loginForm">
+          <a class="brand-mark" href="/">
+            <span class="brand-symbol">D</span>
+            <span>
+              <strong>资料渡口</strong>
+              <small>后台管理</small>
+            </span>
+          </a>
+          <label>
+            <span>账号</span>
+            <input name="username" autocomplete="username" value="yuanfang" />
+          </label>
+          <label>
+            <span>密码</span>
+            <input name="password" type="password" autocomplete="current-password" required />
+          </label>
+          <button class="primary-button" type="submit">登录</button>
+          <p class="form-message" id="loginMessage"></p>
+        </form>
+      </section>
+
+      <section class="admin-app" id="adminApp" hidden>
+        <aside class="admin-sidebar">
+          <a class="brand-mark" href="/">
+            <span class="brand-symbol">D</span>
+            <span>
+              <strong>资料渡口</strong>
+              <small id="adminName">yuanfang</small>
+            </span>
+          </a>
+          <nav class="admin-tabs" aria-label="后台栏目">
+            <button class="is-active" data-view="dashboard">总览</button>
+            <button data-view="resources">资料</button>
+            <button data-view="categories">分类</button>
+            <button data-view="visits">访客</button>
+            <button data-view="opens">打开数据</button>
+          </nav>
+          <button class="ghost-button" id="logoutButton" type="button">退出</button>
+        </aside>
+
+        <section class="admin-main">
+          <div class="admin-topbar">
+            <div>
+              <p class="eyebrow">Admin Console</p>
+              <h1 id="viewTitle">总览</h1>
+            </div>
+            <div class="topbar-actions">
+              <a class="ghost-button" href="/" target="_blank" rel="noreferrer">查看前台</a>
+              <button class="primary-button" id="newResourceButton" type="button">新增资料</button>
+            </div>
+          </div>
+
+          <section class="admin-view is-active" data-panel="dashboard">
+            <div class="stat-grid" id="statGrid"></div>
+            <div class="two-column">
+              <article class="panel">
+                <header><h2>热门地址</h2></header>
+                <div class="list-stack" id="topLinks"></div>
+              </article>
+              <article class="panel">
+                <header><h2>最近打开</h2></header>
+                <div class="list-stack" id="recentOpens"></div>
+              </article>
+            </div>
+          </section>
+
+          <section class="admin-view" data-panel="resources">
+            <article class="panel">
+              <header>
+                <h2>资料库</h2>
+                <button class="primary-button" id="newResourceButtonInline" type="button">新增资料</button>
+              </header>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>标题</th>
+                      <th>分类</th>
+                      <th>链接</th>
+                      <th>状态</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="resourceRows"></tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+
+          <section class="admin-view" data-panel="categories">
+            <article class="panel">
+              <header><h2>分类管理</h2></header>
+              <form class="inline-form" id="categoryForm">
+                <input name="id" type="hidden" />
+                <input name="name" placeholder="分类名称" required />
+                <input name="description" placeholder="分类说明" />
+                <input name="color" type="color" value="#1677ff" aria-label="分类颜色" />
+                <button class="primary-button" type="submit">保存分类</button>
+              </form>
+              <div class="category-admin-list" id="categoryAdminList"></div>
+            </article>
+          </section>
+
+          <section class="admin-view" data-panel="visits">
+            <article class="panel">
+              <header><h2>访客记录</h2></header>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>时间</th>
+                      <th>IP</th>
+                      <th>设备</th>
+                      <th>浏览器</th>
+                      <th>路径</th>
+                    </tr>
+                  </thead>
+                  <tbody id="visitRows"></tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+
+          <section class="admin-view" data-panel="opens">
+            <article class="panel">
+              <header><h2>地址打开数据</h2></header>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>时间</th>
+                      <th>资料</th>
+                      <th>网盘</th>
+                      <th>IP</th>
+                      <th>地址</th>
+                    </tr>
+                  </thead>
+                  <tbody id="openRows"></tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+        </section>
+      </section>
+
+      <dialog class="resource-dialog" id="resourceDialog">
+        <form class="resource-form" id="resourceForm">
+          <header>
+            <div>
+              <p class="eyebrow">Resource</p>
+              <h2 id="resourceFormTitle">新增资料</h2>
+            </div>
+            <button class="icon-button" id="closeResourceDialog" type="button" aria-label="关闭">×</button>
+          </header>
+          <input name="id" type="hidden" />
+          <label>
+            <span>标题</span>
+            <input name="title" required maxlength="80" />
+          </label>
+          <label>
+            <span>简介</span>
+            <textarea name="description" rows="3" maxlength="320"></textarea>
+          </label>
+          <div class="form-grid">
+            <label>
+              <span>分类</span>
+              <select name="categoryId" required></select>
+            </label>
+            <label>
+              <span>标签</span>
+              <input name="tags" placeholder="模板, 学习, 素材" />
+            </label>
+          </div>
+          <fieldset>
+            <legend>夸克网盘</legend>
+            <input name="quarkUrl" type="url" placeholder="https://pan.quark.cn/..." />
+            <input name="quarkCode" placeholder="提取码，可不填" />
+          </fieldset>
+          <fieldset>
+            <legend>百度网盘</legend>
+            <input name="baiduUrl" type="url" placeholder="https://pan.baidu.com/..." />
+            <input name="baiduCode" placeholder="提取码，可不填" />
+          </fieldset>
+          <div class="toggle-row">
+            <label><input name="active" type="checkbox" checked /> 前台展示</label>
+            <label><input name="pinned" type="checkbox" /> 置顶</label>
+          </div>
+          <div class="dialog-actions">
+            <button class="ghost-button" type="button" id="deleteResourceButton">删除</button>
+            <span class="form-message" id="resourceMessage"></span>
+            <button class="primary-button" type="submit">保存资料</button>
+          </div>
+        </form>
+      </dialog>
+    </main>
+  </body>
+</html>

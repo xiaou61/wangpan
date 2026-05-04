@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>资料渡口</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script defer src="/app.js"></script>
+  </head>
+  <body class="public-page">
+    <header class="site-top">
+      <a class="brand-mark" href="/" aria-label="资料渡口首页">
+        <span class="brand-symbol">D</span>
+        <span>
+          <strong>资料渡口</strong>
+          <small>Resource Harbor</small>
+        </span>
+      </a>
+      <a class="admin-link" href="/yuanfang">后台</a>
+    </header>
+
+    <main>
+      <section class="search-band">
+        <div class="search-copy">
+          <p class="eyebrow">Quark / Baidu</p>
+          <h1>把分散的网盘资料，整理成一个清爽入口。</h1>
+          <p class="hero-lead">分类、搜索、统计和网盘跳转都在一个页面里，用户打开就能快速找到需要的资料。</p>
+        </div>
+        <form class="search-panel" id="searchForm" autocomplete="off">
+          <label class="search-box" for="keywordInput">
+            <span>搜索</span>
+            <input id="keywordInput" name="q" type="search" placeholder="输入资料名、标签、关键词" />
+          </label>
+          <div class="provider-tabs" role="group" aria-label="网盘筛选">
+            <button type="button" class="is-active" data-provider="">全部</button>
+            <button type="button" data-provider="quark">夸克</button>
+            <button type="button" data-provider="baidu">百度</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="catalog-shell">
+        <aside class="category-rail" aria-label="资源分类">
+          <div class="rail-title">
+            <span>分类</span>
+            <strong id="categoryCount">0</strong>
+          </div>
+          <div class="category-list" id="categoryList"></div>
+        </aside>
+
+        <section class="resource-stage">
+          <div class="stage-head">
+            <div>
+              <p class="eyebrow">Catalog</p>
+              <h2 id="stageTitle">全部资料</h2>
+            </div>
+            <div class="mini-stats" id="miniStats"></div>
+          </div>
+          <div class="resource-grid" id="resourceGrid" aria-live="polite"></div>
+          <div class="empty-state" id="emptyState" hidden>
+            <strong>没有找到匹配资料</strong>
+            <span>换个关键词或分类试试。</span>
+          </div>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "netdisk-resource-hub",
+  "version": "1.0.0",
+  "description": "网盘资料展示页，包含用户端和后台端。",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "verify": "node scripts/verify.mjs"
+  },
+  "keywords": [
+    "netdisk",
+    "resources",
+    "admin"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.59.1"
+  }
+}
