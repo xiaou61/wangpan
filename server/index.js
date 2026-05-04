@@ -362,6 +362,61 @@ function sameDay(iso, date = new Date()) {
   );
 }
 
+function padNumber(value) {
+  return String(value).padStart(2, "0");
+}
+
+function hourKey(date) {
+  return `${date.getFullYear()}-${padNumber(date.getMonth() + 1)}-${padNumber(date.getDate())} ${padNumber(date.getHours())}`;
+}
+
+function dayKey(date) {
+  return `${date.getFullYear()}-${padNumber(date.getMonth() + 1)}-${padNumber(date.getDate())}`;
+}
+
+function countBy(items, keyFn) {
+  const result = new Map();
+  items.forEach((item) => {
+    const key = keyFn(item) || "未知";
+    result.set(key, (result.get(key) || 0) + 1);
+  });
+  return result;
+}
+
+function lastHours(visits, opens, count = 24) {
+  const now = new Date();
+  const visitMap = countBy(visits, (item) => hourKey(new Date(item.createdAt)));
+  const openMap = countBy(opens, (item) => hourKey(new Date(item.createdAt)));
+  return Array.from({ length: count }, (_, index) => {
+    const date = new Date(now);
+    date.setMinutes(0, 0, 0);
+    date.setHours(date.getHours() - (count - 1 - index));
+    const key = hourKey(date);
+    return {
+      label: `${padNumber(date.getHours())}:00`,
+      visits: visitMap.get(key) || 0,
+      opens: openMap.get(key) || 0
+    };
+  });
+}
+
+function lastDays(visits, opens, count = 7) {
+  const now = new Date();
+  const visitMap = countBy(visits, (item) => dayKey(new Date(item.createdAt)));
+  const openMap = countBy(opens, (item) => dayKey(new Date(item.createdAt)));
+  return Array.from({ length: count }, (_, index) => {
+    const date = new Date(now);
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() - (count - 1 - index));
+    const key = dayKey(date);
+    return {
+      label: `${padNumber(date.getMonth() + 1)}/${padNumber(date.getDate())}`,
+      visits: visitMap.get(key) || 0,
+      opens: openMap.get(key) || 0
+    };
+  });
+}
+
 app.get("/", (req, res) => {
   recordVisit(req);
   res.sendFile(path.join(publicDir, "index.html"));
@@ -477,6 +532,34 @@ app.get("/api/admin/stats", requireAdmin, (req, res) => {
   });
   linkStats.sort((a, b) => b.count - a.count);
 
+  const resourceStats = db.resources
+    .map((resource) => {
+      const opens = db.opens.filter((item) => item.resourceId === resource.id);
+      return {
+        resourceId: resource.id,
+        resourceTitle: resource.title,
+        count: opens.length,
+        lastOpenAt: opens[0] ? opens[0].createdAt : ""
+      };
+    })
+    .sort((a, b) => b.count - a.count);
+
+  const providerStats = Array.from(countBy(db.opens, (item) => providerLabel(item.provider, item.label))).map(([label, count]) => ({
+    label,
+    count
+  }));
+  providerStats.sort((a, b) => b.count - a.count);
+
+  const deviceStats = Array.from(countBy(db.visits, (item) => item.device)).map(([label, count]) => ({ label, count }));
+  deviceStats.sort((a, b) => b.count - a.count);
+
+  const browserStats = Array.from(countBy(db.visits, (item) => item.browser)).map(([label, count]) => ({ label, count }));
+  browserStats.sort((a, b) => b.count - a.count);
+
+  const todayVisits = db.visits.filter((item) => sameDay(item.createdAt, today));
+  const todayOpens = db.opens.filter((item) => sameDay(item.createdAt, today));
+  const todayUniqueIps = new Set(todayVisits.map((item) => item.ip)).size;
+
   res.json({
     totals: {
       resources: db.resources.length,
@@ -484,10 +567,18 @@ app.get("/api/admin/stats", requireAdmin, (req, res) => {
       categories: db.categories.length,
       visits: db.visits.length,
       opens: db.opens.length,
-      todayVisits: db.visits.filter((item) => sameDay(item.createdAt, today)).length,
-      todayOpens: db.opens.filter((item) => sameDay(item.createdAt, today)).length
+      todayVisits: todayVisits.length,
+      todayOpens: todayOpens.length,
+      todayUniqueIps,
+      openRate: todayVisits.length ? Number((todayOpens.length / todayVisits.length).toFixed(2)) : 0
     },
     topLinks: linkStats.slice(0, 10),
+    topResources: resourceStats.slice(0, 10),
+    providerStats,
+    deviceStats,
+    browserStats,
+    hourlyTrend: lastHours(db.visits, db.opens),
+    dailyTrend: lastDays(db.visits, db.opens),
     recentVisits: db.visits.slice(0, 12),
     recentOpens: db.opens.slice(0, 12)
   });

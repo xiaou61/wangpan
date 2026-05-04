@@ -52,6 +52,8 @@ await page.waitForSelector(".admin-app:not([hidden])", { timeout: 5000 });
 await removeVerificationResources(page);
 await page.waitForTimeout(700);
 await page.screenshot({ path: "output/playwright/admin-dashboard.png", fullPage: true });
+if ((await page.locator(".dashboard-screen").count()) < 1) throw new Error("Dashboard screen is missing");
+if ((await page.locator(".trend-bar").count()) !== 24) throw new Error("Hourly trend should render 24 bars");
 
 await page.click('[data-view="resources"]');
 await page.click("#newResourceButtonInline");

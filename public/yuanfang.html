@@ -62,16 +62,77 @@
             </div>
           </div>
 
-          <section class="admin-view is-active" data-panel="dashboard">
-            <div class="stat-grid" id="statGrid"></div>
-            <div class="two-column">
-              <article class="panel">
-                <header><h2>热门地址</h2></header>
-                <div class="list-stack" id="topLinks"></div>
+          <section class="admin-view is-active dashboard-screen" data-panel="dashboard">
+            <div class="screen-hero">
+              <div>
+                <p class="eyebrow">Live Data Screen</p>
+                <h2>访客与打开数据大屏</h2>
+                <span id="screenUpdated">实时刷新当前统计</span>
+              </div>
+              <div class="screen-live"><span></span>正在监控</div>
+            </div>
+
+            <div class="kpi-wall" id="statGrid"></div>
+
+            <div class="screen-grid">
+              <article class="screen-panel trend-panel">
+                <header>
+                  <h2>近 24 小时趋势</h2>
+                  <span>访客 / 打开</span>
+                </header>
+                <div class="trend-bars" id="hourlyTrend"></div>
               </article>
-              <article class="panel">
-                <header><h2>最近打开</h2></header>
-                <div class="list-stack" id="recentOpens"></div>
+
+              <article class="screen-panel">
+                <header>
+                  <h2>网盘打开占比</h2>
+                  <span>按地址类型统计</span>
+                </header>
+                <div class="donut-wrap">
+                  <div class="donut-ring" id="providerRing"><strong>0</strong><span>总打开</span></div>
+                  <div class="rank-list compact" id="providerStats"></div>
+                </div>
+              </article>
+
+              <article class="screen-panel">
+                <header>
+                  <h2>热门资料排行</h2>
+                  <span>按打开次数</span>
+                </header>
+                <div class="rank-list" id="topResources"></div>
+              </article>
+
+              <article class="screen-panel">
+                <header>
+                  <h2>热门地址排行</h2>
+                  <span>具体网盘链接</span>
+                </header>
+                <div class="rank-list" id="topLinks"></div>
+              </article>
+
+              <article class="screen-panel">
+                <header>
+                  <h2>设备与浏览器</h2>
+                  <span>访客来源分布</span>
+                </header>
+                <div class="split-metrics">
+                  <div>
+                    <strong>设备</strong>
+                    <div class="rank-list compact" id="deviceStats"></div>
+                  </div>
+                  <div>
+                    <strong>浏览器</strong>
+                    <div class="rank-list compact" id="browserStats"></div>
+                  </div>
+                </div>
+              </article>
+
+              <article class="screen-panel">
+                <header>
+                  <h2>实时动态</h2>
+                  <span>访客 / 打开</span>
+                </header>
+                <div class="activity-stream" id="liveFeed"></div>
               </article>
             </div>
           </section>

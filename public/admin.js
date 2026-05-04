@@ -20,6 +20,14 @@ const els = {
   newResourceButton: q("#newResourceButton"),
   newResourceButtonInline: q("#newResourceButtonInline"),
   statGrid: q("#statGrid"),
+  screenUpdated: q("#screenUpdated"),
+  hourlyTrend: q("#hourlyTrend"),
+  providerRing: q("#providerRing"),
+  providerStats: q("#providerStats"),
+  topResources: q("#topResources"),
+  deviceStats: q("#deviceStats"),
+  browserStats: q("#browserStats"),
+  liveFeed: q("#liveFeed"),
   topLinks: q("#topLinks"),
   recentOpens: q("#recentOpens"),
   resourceRows: q("#resourceRows"),
@@ -118,30 +126,127 @@ async function loadOpens() {
 function renderStats() {
   const totals = state.stats.totals || {};
   const cards = [
-    ["资料总数", totals.resources || 0],
-    ["前台展示", totals.activeResources || 0],
-    ["今日访客", totals.todayVisits || 0],
-    ["今日打开", totals.todayOpens || 0],
-    ["累计访客", totals.visits || 0],
-    ["累计打开", totals.opens || 0],
-    ["分类", totals.categories || 0],
-    ["热门地址", (state.stats.topLinks || []).filter((item) => item.count > 0).length]
+    ["今日访客", totals.todayVisits || 0, "VISITS"],
+    ["今日打开", totals.todayOpens || 0, "OPENS"],
+    ["独立 IP", totals.todayUniqueIps || 0, "UNIQUE"],
+    ["打开转化", `${Math.round((totals.openRate || 0) * 100)}%`, "RATE"],
+    ["累计访客", totals.visits || 0, "TOTAL"],
+    ["累计打开", totals.opens || 0, "TOTAL"],
+    ["资料总数", totals.resources || 0, "DATA"],
+    ["热门地址", (state.stats.topLinks || []).filter((item) => item.count > 0).length, "HOT"]
   ];
   els.statGrid.replaceChildren(
-    ...cards.map(([label, value]) => {
+    ...cards.map(([label, value, code]) => {
       const card = el("article", "stat-card");
-      card.append(el("span", "", label), el("strong", "", value));
+      card.append(el("span", "", label), el("strong", "", value), el("em", "", code));
       return card;
     })
   );
 
-  els.topLinks.replaceChildren(...listOrEmpty(state.stats.topLinks || [], renderTopLink, "暂无打开数据"));
-  els.recentOpens.replaceChildren(...listOrEmpty(state.stats.recentOpens || [], renderRecentOpen, "暂无打开记录"));
+  els.screenUpdated.textContent = `更新于 ${formatTime(new Date().toISOString())}`;
+  renderTrendBars(state.stats.hourlyTrend || []);
+  renderProviderStats();
+  els.topResources.replaceChildren(...listOrEmpty(state.stats.topResources || [], renderRankResource, "暂无资料打开数据"));
+  els.topLinks.replaceChildren(...listOrEmpty(state.stats.topLinks || [], renderRankLink, "暂无地址打开数据"));
+  els.deviceStats.replaceChildren(...listOrEmpty(state.stats.deviceStats || [], renderMiniMetric, "暂无设备数据"));
+  els.browserStats.replaceChildren(...listOrEmpty(state.stats.browserStats || [], renderMiniMetric, "暂无浏览器数据"));
+  renderLiveFeed();
 }
 
 function listOrEmpty(items, renderer, emptyText) {
   if (!items.length) return [el("div", "list-item muted-text", emptyText)];
   return items.map(renderer);
+}
+
+function percentOf(value, max) {
+  if (!max) return 0;
+  return Math.max(2, Math.round((value / max) * 100));
+}
+
+function renderTrendBars(items) {
+  const max = Math.max(1, ...items.map((item) => Math.max(item.visits || 0, item.opens || 0)));
+  els.hourlyTrend.replaceChildren(
+    ...items.map((item) => {
+      const bar = el("div", "trend-bar");
+      bar.title = `${item.label} 访客 ${item.visits || 0} / 打开 ${item.opens || 0}`;
+      const visit = el("span", "visit-bar");
+      const open = el("span", "open-bar");
+      visit.style.height = `${percentOf(item.visits || 0, max)}%`;
+      open.style.height = `${percentOf(item.opens || 0, max)}%`;
+      bar.append(visit, open, el("em", "", item.label.split(":")[0]));
+      return bar;
+    })
+  );
+}
+
+function renderProviderStats() {
+  const items = state.stats.providerStats || [];
+  const total = items.reduce((sum, item) => sum + item.count, 0);
+  els.providerRing.querySelector("strong").textContent = total;
+  els.providerStats.replaceChildren(...listOrEmpty(items, renderMiniMetric, "暂无打开数据"));
+}
+
+function renderRankResource(item, index) {
+  const node = el("div", "rank-item");
+  const max = Math.max(1, ...(state.stats.topResources || []).map((entry) => entry.count || 0));
+  node.append(
+    el("i", "", String(index + 1).padStart(2, "0")),
+    rankBody(item.resourceTitle, `${item.count || 0} 次打开`, percentOf(item.count || 0, max))
+  );
+  return node;
+}
+
+function renderRankLink(item, index) {
+  const node = el("div", "rank-item");
+  const max = Math.max(1, ...(state.stats.topLinks || []).map((entry) => entry.count || 0));
+  node.append(
+    el("i", "", String(index + 1).padStart(2, "0")),
+    rankBody(item.resourceTitle, `${providerName(item.provider)} · ${item.count || 0} 次打开`, percentOf(item.count || 0, max))
+  );
+  return node;
+}
+
+function rankBody(title, meta, percent) {
+  const body = el("div", "rank-body");
+  const row = el("div", "rank-copy");
+  row.append(el("strong", "", title || "未知"), el("span", "", meta || ""));
+  const rail = el("div", "rank-rail");
+  const fill = el("span");
+  fill.style.width = `${percent}%`;
+  rail.append(fill);
+  body.append(row, rail);
+  return body;
+}
+
+function renderMiniMetric(item) {
+  const node = el("div", "metric-row");
+  node.append(el("span", "", item.label || "未知"), el("strong", "", item.count || 0));
+  return node;
+}
+
+function renderLiveFeed() {
+  const visits = (state.stats.recentVisits || []).slice(0, 6).map((item) => ({
+    type: "访客",
+    title: `${item.ip || "未知 IP"} 访问了 ${item.path || "/"}`,
+    meta: `${item.device || ""} · ${item.browser || ""} · ${formatTime(item.createdAt)}`,
+    time: item.createdAt
+  }));
+  const opens = (state.stats.recentOpens || []).slice(0, 6).map((item) => ({
+    type: "打开",
+    title: item.resourceTitle || "未知资料",
+    meta: `${providerName(item.provider)} · ${item.ip || ""} · ${formatTime(item.createdAt)}`,
+    time: item.createdAt
+  }));
+  const feed = [...visits, ...opens]
+    .sort((a, b) => String(b.time || "").localeCompare(String(a.time || "")))
+    .slice(0, 10);
+  els.liveFeed.replaceChildren(...listOrEmpty(feed, renderActivity, "暂无实时动态"));
+}
+
+function renderActivity(item) {
+  const node = el("div", "activity-item");
+  node.append(el("b", "", item.type), el("strong", "", item.title), el("span", "", item.meta));
+  return node;
 }
 
 function renderTopLink(item) {
