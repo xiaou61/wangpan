@@ -31,6 +31,8 @@ const els = {
   topLinks: q("#topLinks"),
   recentOpens: q("#recentOpens"),
   resourceRows: q("#resourceRows"),
+  requestRows: q("#requestRows"),
+  requestSummary: q("#requestSummary"),
   categoryForm: q("#categoryForm"),
   categoryAdminList: q("#categoryAdminList"),
   visitRows: q("#visitRows"),
@@ -63,7 +65,7 @@ function formatTime(value) {
 async function api(url, options = {}) {
   const headers = { ...(options.headers || {}) };
   if (options.body && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
-  if (state.csrfToken && ["POST", "PUT", "DELETE"].includes(options.method)) {
+  if (state.csrfToken && ["POST", "PUT", "PATCH", "DELETE"].includes(options.method)) {
     headers["X-CSRF-Token"] = state.csrfToken;
   }
   const res = await fetch(url, { ...options, headers });
@@ -95,7 +97,7 @@ async function checkSession() {
 }
 
 async function refreshAll() {
-  await Promise.all([loadStats(), loadResources(), loadVisits(), loadOpens()]);
+  await Promise.all([loadStats(), loadResources(), loadRequests(), loadVisits(), loadOpens()]);
 }
 
 async function loadStats() {
@@ -123,6 +125,11 @@ async function loadOpens() {
   renderOpens(data.opens || []);
 }
 
+async function loadRequests() {
+  const data = await api("/api/admin/requests?limit=220");
+  renderRequests(data.requests || []);
+}
+
 function renderStats() {
   const totals = state.stats.totals || {};
   const cards = [
@@ -130,10 +137,10 @@ function renderStats() {
     ["今日打开", totals.todayOpens || 0, "OPENS"],
     ["独立 IP", totals.todayUniqueIps || 0, "UNIQUE"],
     ["打开转化", `${Math.round((totals.openRate || 0) * 100)}%`, "RATE"],
+    ["新增需求", totals.newRequests || 0, "NEEDS"],
     ["累计访客", totals.visits || 0, "TOTAL"],
     ["累计打开", totals.opens || 0, "TOTAL"],
-    ["资料总数", totals.resources || 0, "DATA"],
-    ["热门地址", (state.stats.topLinks || []).filter((item) => item.count > 0).length, "HOT"]
+    ["资料总数", totals.resources || 0, "DATA"]
   ];
   els.statGrid.replaceChildren(
     ...cards.map(([label, value, code]) => {
@@ -366,6 +373,61 @@ function renderOpens(opens) {
   );
 }
 
+function statusText(status) {
+  if (status === "processing") return "处理中";
+  if (status === "done") return "已完成";
+  return "新需求";
+}
+
+function urgencyText(urgency) {
+  if (urgency === "urgent") return "很急";
+  if (urgency === "soon") return "尽快";
+  return "普通";
+}
+
+function renderRequests(requests) {
+  const pending = requests.filter((item) => item.status === "new").length;
+  els.requestSummary.textContent = `${requests.length} 条需求 · ${pending} 条新需求`;
+  els.requestRows.replaceChildren(
+    ...listOrEmpty(requests, (request) => {
+      const item = el("article", `request-admin-card ${request.status || "new"}`);
+      const head = el("div", "request-admin-head");
+      const title = el("div");
+      title.append(el("strong", "", request.title || "未命名需求"), el("small", "", `${formatTime(request.createdAt)} · ${request.ip || ""}`));
+      head.append(title, el("span", `need-status ${request.status || "new"}`, statusText(request.status)));
+
+      const desc = el("p", "", request.description || "无说明");
+      const meta = el("div", "request-admin-meta");
+      meta.append(
+        el("span", "", `分类：${categoryName(request.categoryId)}`),
+        el("span", "", `紧急：${urgencyText(request.urgency)}`),
+        el("span", "", `联系：${request.contact || "未填写"}`),
+        el("span", "", `${request.device || ""} / ${request.browser || ""}`)
+      );
+
+      const actions = el("div", "table-actions");
+      [
+        ["new", "标新"],
+        ["processing", "处理中"],
+        ["done", "完成"]
+      ].forEach(([status, label]) => {
+        const button = el("button", "tiny-button", label);
+        button.type = "button";
+        button.disabled = request.status === status;
+        button.addEventListener("click", () => updateRequestStatus(request.id, status));
+        actions.append(button);
+      });
+      const del = el("button", "tiny-button danger-button", "删除");
+      del.type = "button";
+      del.addEventListener("click", () => deleteRequest(request));
+      actions.append(del);
+
+      item.append(head, desc, meta, actions);
+      return item;
+    }, "暂无用户需求")
+  );
+}
+
 function fillCategorySelect() {
   const select = els.resourceForm.elements.categoryId;
   select.replaceChildren(
@@ -413,6 +475,20 @@ async function deleteCategory(category) {
   await api(`/api/admin/categories/${category.id}`, { method: "DELETE" });
   await loadResources();
   await loadStats();
+}
+
+async function updateRequestStatus(id, status) {
+  await api(`/api/admin/requests/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status })
+  });
+  await Promise.all([loadRequests(), loadStats()]);
+}
+
+async function deleteRequest(request) {
+  if (!confirm(`删除需求「${request.title}」？`)) return;
+  await api(`/api/admin/requests/${request.id}`, { method: "DELETE" });
+  await Promise.all([loadRequests(), loadStats()]);
 }
 
 function openResourceDialog(resource) {
@@ -507,6 +583,7 @@ function switchView(view) {
     dashboard: "总览",
     resources: "资料",
     categories: "分类",
+    requests: "需求收集",
     visits: "访客",
     opens: "打开数据"
   };

@@ -14,6 +14,9 @@ const LOGIN_LOCK_MS = 24 * 60 * 60 * 1000;
 const LOGIN_MAX_FAILURES = 3;
 const MAX_VISITS = 5000;
 const MAX_OPENS = 10000;
+const MAX_REQUESTS = 3000;
+const REQUEST_WINDOW_MS = 10 * 60 * 1000;
+const REQUEST_MAX_PER_WINDOW = 5;
 
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString("base64url");
 const isProduction = process.env.NODE_ENV === "production";
@@ -191,6 +194,7 @@ function requireCsrf(req, res, next) {
 }
 
 const loginFailures = new Map();
+const resourceRequestAttempts = new Map();
 
 function loginBlockStatus(ip) {
   const now = Date.now();
@@ -231,6 +235,18 @@ function clearLoginFailures(ip) {
 function formatRemaining(ms) {
   const hours = Math.max(1, Math.ceil(ms / (60 * 60 * 1000)));
   return `${hours} 小时`;
+}
+
+function checkResourceRequestLimit(ip) {
+  const now = Date.now();
+  const attempts = (resourceRequestAttempts.get(ip) || []).filter((time) => now - time < REQUEST_WINDOW_MS);
+  if (attempts.length >= REQUEST_MAX_PER_WINDOW) {
+    resourceRequestAttempts.set(ip, attempts);
+    return false;
+  }
+  attempts.push(now);
+  resourceRequestAttempts.set(ip, attempts);
+  return true;
 }
 
 function recordVisit(req) {
@@ -341,6 +357,33 @@ function validateResource(body, db, existingId) {
       active: body.active !== false,
       pinned: Boolean(body.pinned),
       links
+    }
+  };
+}
+
+function validateResourceRequest(body, db) {
+  const title = limitText(body.title, 80);
+  const description = limitText(body.description, 500);
+  const contact = limitText(body.contact, 120);
+  const categoryId = limitText(body.categoryId, 80);
+  const name = limitText(body.name, 40);
+  const urgency = ["normal", "soon", "urgent"].includes(body.urgency) ? body.urgency : "normal";
+
+  if (title.length < 2) return { error: "请填写想要的资料名称" };
+  if (description.length < 4) return { error: "请简单说明你想要什么资料" };
+  if (categoryId && !db.categories.some((item) => item.id === categoryId)) {
+    return { error: "请选择有效分类" };
+  }
+
+  return {
+    value: {
+      title,
+      description,
+      contact,
+      categoryId,
+      name,
+      urgency,
+      status: "new"
     }
   };
 }
@@ -469,6 +512,43 @@ app.get("/api/public/resources", (req, res) => {
   });
 });
 
+app.post("/api/public/requests", (req, res) => {
+  const ip = getClientIp(req);
+  if (!checkResourceRequestLimit(ip)) {
+    return sendError(res, 429, "提交太频繁了，请稍后再试");
+  }
+
+  const db = readDb();
+  const parsed = validateResourceRequest(req.body || {}, db);
+  if (parsed.error) return sendError(res, 400, parsed.error);
+
+  const ua = parseUserAgent(req.headers["user-agent"]);
+  const request = {
+    id: makeId("need"),
+    ...parsed.value,
+    ip,
+    referrer: limitText(req.get("referer"), 260),
+    ...ua,
+    createdAt: nowIso(),
+    updatedAt: nowIso()
+  };
+
+  updateDb((nextDb) => {
+    nextDb.requests.unshift(request);
+    nextDb.requests = nextDb.requests.slice(0, MAX_REQUESTS);
+  });
+
+  res.status(201).json({
+    ok: true,
+    request: {
+      id: request.id,
+      title: request.title,
+      status: request.status,
+      createdAt: request.createdAt
+    }
+  });
+});
+
 app.get("/go/:resourceId/:linkId", (req, res) => {
   const db = readDb();
   const resource = db.resources.find((item) => item.id === req.params.resourceId && item.active !== false);
@@ -570,7 +650,9 @@ app.get("/api/admin/stats", requireAdmin, (req, res) => {
       todayVisits: todayVisits.length,
       todayOpens: todayOpens.length,
       todayUniqueIps,
-      openRate: todayVisits.length ? Number((todayOpens.length / todayVisits.length).toFixed(2)) : 0
+      openRate: todayVisits.length ? Number((todayOpens.length / todayVisits.length).toFixed(2)) : 0,
+      requests: db.requests.length,
+      newRequests: db.requests.filter((item) => item.status === "new").length
     },
     topLinks: linkStats.slice(0, 10),
     topResources: resourceStats.slice(0, 10),
@@ -696,6 +778,40 @@ app.get("/api/admin/opens", requireAdmin, (req, res) => {
   const db = readDb();
   const opens = resourceId ? db.opens.filter((item) => item.resourceId === resourceId) : db.opens;
   res.json({ opens: opens.slice(0, limit) });
+});
+
+app.get("/api/admin/requests", requireAdmin, (req, res) => {
+  const limit = Math.min(Number(req.query.limit || 200), 500);
+  const status = limitText(req.query.status, 20);
+  const db = readDb();
+  const requests = status ? db.requests.filter((item) => item.status === status) : db.requests;
+  res.json({ requests: requests.slice(0, limit), categories: db.categories });
+});
+
+app.patch("/api/admin/requests/:id", requireAdmin, requireCsrf, (req, res) => {
+  const status = ["new", "processing", "done"].includes(req.body.status) ? req.body.status : "";
+  if (!status) return sendError(res, 400, "请选择有效状态");
+
+  const request = updateDb((db) => {
+    const item = db.requests.find((entry) => entry.id === req.params.id);
+    if (!item) return null;
+    item.status = status;
+    item.updatedAt = nowIso();
+    return item;
+  });
+
+  if (!request) return sendError(res, 404, "需求不存在");
+  res.json({ request });
+});
+
+app.delete("/api/admin/requests/:id", requireAdmin, requireCsrf, (req, res) => {
+  const removed = updateDb((db) => {
+    const before = db.requests.length;
+    db.requests = db.requests.filter((item) => item.id !== req.params.id);
+    return before !== db.requests.length;
+  });
+  if (!removed) return sendError(res, 404, "需求不存在");
+  res.json({ ok: true });
 });
 
 app.use((req, res) => {

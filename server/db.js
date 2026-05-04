@@ -13,7 +13,7 @@ function ensureDb() {
   if (!fs.existsSync(dbPath)) {
     const seed = fs.existsSync(seedPath)
       ? fs.readFileSync(seedPath, "utf8")
-      : JSON.stringify({ categories: [], resources: [], visits: [], opens: [] }, null, 2);
+      : JSON.stringify({ categories: [], resources: [], visits: [], opens: [], requests: [] }, null, 2);
     fs.writeFileSync(dbPath, seed, "utf8");
   }
 }
@@ -23,7 +23,8 @@ function normalizeDb(db) {
     categories: Array.isArray(db.categories) ? db.categories : [],
     resources: Array.isArray(db.resources) ? db.resources : [],
     visits: Array.isArray(db.visits) ? db.visits : [],
-    opens: Array.isArray(db.opens) ? db.opens : []
+    opens: Array.isArray(db.opens) ? db.opens : [],
+    requests: Array.isArray(db.requests) ? db.requests : []
   };
 }
 

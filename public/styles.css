@@ -632,6 +632,111 @@ button {
   color: var(--ink);
 }
 
+.request-band {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(380px, 1.15fr);
+  gap: 24px;
+  width: min(1180px, calc(100% - 36px));
+  margin: -20px auto 70px;
+  align-items: stretch;
+}
+
+.request-copy,
+.request-form {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(18px);
+}
+
+.request-copy {
+  display: grid;
+  align-content: center;
+  min-height: 320px;
+  padding: 28px;
+  background:
+    radial-gradient(circle at 14% 12%, rgba(34, 199, 232, 0.16), transparent 34%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(232, 244, 255, 0.86));
+}
+
+.request-copy::before,
+.request-form::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, var(--blue), var(--cyan), var(--blue-3));
+}
+
+.request-copy h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 34px;
+}
+
+.request-copy p:last-child {
+  max-width: 460px;
+  margin: 16px 0 0;
+  color: var(--muted);
+  line-height: 1.9;
+}
+
+.request-form {
+  display: grid;
+  gap: 14px;
+  padding: 22px;
+}
+
+.request-form label {
+  display: grid;
+  gap: 8px;
+}
+
+.request-form label span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.request-form input,
+.request-form textarea,
+.request-form select {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid rgba(77, 143, 220, 0.22);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--ink);
+  outline: none;
+  padding: 12px 14px;
+}
+
+.request-form textarea {
+  resize: vertical;
+}
+
+.request-form input:focus,
+.request-form textarea:focus,
+.request-form select:focus {
+  border-color: rgba(22, 119, 255, 0.72);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(22, 119, 255, 0.12);
+}
+
+.request-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.request-actions .form-message {
+  flex: 1;
+}
+
 .admin-layout,
 .admin-app {
   min-height: 100vh;
@@ -664,6 +769,10 @@ button {
   color: var(--danger);
   font-size: 13px;
   line-height: 1.5;
+}
+
+.form-message.is-success {
+  color: var(--success);
 }
 
 .admin-app {
@@ -835,6 +944,11 @@ tr:last-child td {
   box-shadow: none;
 }
 
+.danger-button {
+  border-color: rgba(239, 91, 106, 0.28);
+  color: var(--danger);
+}
+
 .inline-form {
   display: grid;
   grid-template-columns: minmax(160px, 1fr) minmax(220px, 2fr) 58px auto;
@@ -867,6 +981,88 @@ tr:last-child td {
 .category-admin-item strong,
 .resource-title-cell strong {
   display: block;
+}
+
+.panel-subtitle {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.request-admin-list {
+  display: grid;
+  gap: 12px;
+}
+
+.request-admin-card {
+  display: grid;
+  gap: 12px;
+  border: 1px solid rgba(22, 119, 255, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+  padding: 15px;
+}
+
+.request-admin-card.processing {
+  border-color: rgba(34, 199, 232, 0.42);
+}
+
+.request-admin-card.done {
+  opacity: 0.78;
+}
+
+.request-admin-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.request-admin-head strong {
+  display: block;
+  font-size: 17px;
+}
+
+.request-admin-head small {
+  color: var(--muted);
+}
+
+.request-admin-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.request-admin-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.request-admin-meta span,
+.need-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border-radius: 999px;
+  background: rgba(232, 244, 255, 0.85);
+  color: #42617f;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.need-status {
+  background: linear-gradient(135deg, var(--blue), var(--blue-3));
+  color: #fff;
+  white-space: nowrap;
+}
+
+.need-status.processing {
+  background: linear-gradient(135deg, var(--cyan), var(--blue));
+}
+
+.need-status.done {
+  background: linear-gradient(135deg, var(--success), #0a9f7b);
 }
 
 .provider-badge.quark {
@@ -1332,7 +1528,8 @@ legend {
 
   .resource-grid,
   .two-column,
-  .form-grid {
+  .form-grid,
+  .request-band {
     grid-template-columns: 1fr;
   }
 
@@ -1348,7 +1545,7 @@ legend {
   }
 
   .admin-tabs {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .admin-tabs button {
@@ -1400,13 +1597,16 @@ legend {
   .category-list,
   .stat-grid,
   .inline-form,
-  fieldset {
+  fieldset,
+  .request-form .form-grid {
     grid-template-columns: 1fr;
   }
 
   .stage-head,
   .admin-topbar,
-  .dialog-actions {
+  .dialog-actions,
+  .request-actions,
+  .request-admin-head {
     align-items: stretch;
     flex-direction: column;
   }

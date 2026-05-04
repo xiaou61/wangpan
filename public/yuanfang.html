@@ -44,6 +44,7 @@
             <button class="is-active" data-view="dashboard">总览</button>
             <button data-view="resources">资料</button>
             <button data-view="categories">分类</button>
+            <button data-view="requests">需求收集</button>
             <button data-view="visits">访客</button>
             <button data-view="opens">打开数据</button>
           </nav>
@@ -171,6 +172,16 @@
                 <button class="primary-button" type="submit">保存分类</button>
               </form>
               <div class="category-admin-list" id="categoryAdminList"></div>
+            </article>
+          </section>
+
+          <section class="admin-view" data-panel="requests">
+            <article class="panel">
+              <header>
+                <h2>资源需求收集</h2>
+                <span class="panel-subtitle" id="requestSummary">0 条需求</span>
+              </header>
+              <div class="request-admin-list" id="requestRows"></div>
             </article>
           </section>
 

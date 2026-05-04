@@ -15,6 +15,9 @@ const els = {
   miniStats: document.querySelector("#miniStats"),
   keywordInput: document.querySelector("#keywordInput"),
   searchForm: document.querySelector("#searchForm"),
+  resourceRequestForm: document.querySelector("#resourceRequestForm"),
+  requestCategory: document.querySelector("#requestCategory"),
+  requestMessage: document.querySelector("#requestMessage"),
   providerButtons: document.querySelectorAll("[data-provider]")
 };
 
@@ -39,12 +42,24 @@ async function getJson(url) {
   return res.json();
 }
 
+async function postJson(url, body) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "提交失败，请稍后再试");
+  return data;
+}
+
 async function loadSummary() {
   const data = await getJson("/api/public/summary");
   state.categories = data.categories || [];
   state.stats = data.stats || {};
   renderCategories();
   renderStats();
+  renderRequestCategories();
 }
 
 async function loadResources() {
@@ -87,6 +102,21 @@ function renderCategories() {
       copy.append(el("strong", "", category.name), el("small", "", category.description || "所有可见资源"));
       button.append(dot, copy, el("small", "", category.count || 0));
       return button;
+    })
+  );
+}
+
+function renderRequestCategories() {
+  if (!els.requestCategory) return;
+  const options = [
+    { id: "", name: "不确定 / 其他" },
+    ...state.categories
+  ];
+  els.requestCategory.replaceChildren(
+    ...options.map((category) => {
+      const option = el("option", "", category.name);
+      option.value = category.id;
+      return option;
     })
   );
 }
@@ -167,6 +197,32 @@ function bindEvents() {
     state.category = button.dataset.category;
     renderCategories();
     loadResources();
+  });
+
+  els.resourceRequestForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    els.requestMessage.textContent = "";
+    const form = event.currentTarget;
+    const submit = form.querySelector('button[type="submit"]');
+    submit.disabled = true;
+    try {
+      await postJson("/api/public/requests", {
+        title: form.elements.title.value,
+        categoryId: form.elements.categoryId.value,
+        description: form.elements.description.value,
+        contact: form.elements.contact.value,
+        urgency: form.elements.urgency.value
+      });
+      form.reset();
+      renderRequestCategories();
+      els.requestMessage.textContent = "已提交，我会在后台看到这条需求。";
+      els.requestMessage.classList.add("is-success");
+    } catch (error) {
+      els.requestMessage.textContent = error.message;
+      els.requestMessage.classList.remove("is-success");
+    } finally {
+      submit.disabled = false;
+    }
   });
 }
 

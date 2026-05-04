@@ -63,6 +63,48 @@
           </div>
         </section>
       </section>
+
+      <section class="request-band" aria-labelledby="requestTitle">
+        <div class="request-copy">
+          <p class="eyebrow">Need Collect</p>
+          <h2 id="requestTitle">没找到想要的资料？</h2>
+          <p>把你想要的资源告诉我，后台会收到这条需求，后面可以按需求补充资源分类和网盘链接。</p>
+        </div>
+        <form class="request-form" id="resourceRequestForm" autocomplete="off">
+          <div class="form-grid">
+            <label>
+              <span>想要的资料</span>
+              <input name="title" maxlength="80" placeholder="例如：考研数学真题合集" required />
+            </label>
+            <label>
+              <span>分类倾向</span>
+              <select name="categoryId" id="requestCategory"></select>
+            </label>
+          </div>
+          <label>
+            <span>需求说明</span>
+            <textarea name="description" rows="4" maxlength="500" placeholder="描述你想要的版本、年份、类型、用途等" required></textarea>
+          </label>
+          <div class="form-grid">
+            <label>
+              <span>联系方式</span>
+              <input name="contact" maxlength="120" placeholder="QQ / 微信 / 邮箱，可不填" />
+            </label>
+            <label>
+              <span>紧急程度</span>
+              <select name="urgency">
+                <option value="normal">普通</option>
+                <option value="soon">尽快</option>
+                <option value="urgent">很急</option>
+              </select>
+            </label>
+          </div>
+          <div class="request-actions">
+            <p class="form-message" id="requestMessage"></p>
+            <button class="primary-button" type="submit">提交需求</button>
+          </div>
+        </form>
+      </section>
     </main>
   </body>
 </html>
